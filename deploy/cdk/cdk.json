@@ -1,0 +1,14 @@
+{
+  "app": "python app.py",
+  "context": {
+    "serviceName": "audi-fargate",
+    "enableCodeDeploy": "false",
+    "enableAdot": "false",
+    "cpuTargetUtilizationPercent": "55",
+    "minTaskCount": "1",
+    "maxTaskCount": "5",
+    "githubOrg": "your-org",
+    "githubRepo": "your-repo"
+  }
+}
+
