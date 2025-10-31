@@ -353,18 +353,21 @@ The command outputs the Application Load Balancer DNS name when finished. The se
 `.github/workflows/deploy.yml` configures a deployment workflow that:
 
 1. Assumes the CDK deploy role using GitHub Actions OIDC (no long-lived AWS keys).
-2. Installs CDK dependencies.
-3. Runs `cdk diff` for visibility and `cdk deploy` with `--require-approval never`.
+2. Sets up Node.js and installs CDK CLI.
+3. Sets up Python and installs CDK dependencies.
+4. Runs `cdk diff` for visibility and `cdk deploy` with `--require-approval never`.
+
+The workflow triggers automatically on pushes to the `main` branch and can also be manually triggered via `workflow_dispatch`.
 
 Populate the following GitHub repository secrets/variables before running the workflow:
 
 * Secrets
-  * `AWS_ACCOUNT_ID`
-  * `AWS_REGION`
-  * `AWS_DEPLOY_ROLE_ARN` (output from the CDK stack)
+  * `AWS_ACCOUNT_ID` - Your AWS account ID
+  * `AWS_REGION` - AWS region for deployment (e.g., `us-east-1`)
+  * `AWS_DEPLOY_ROLE_ARN` - IAM role ARN output from the CDK stack deployment
 * Variables
-  * `GITHUB_ORG`
-  * `GITHUB_REPO`
+  * `GITHUB_ORG` - GitHub organization name (e.g., `ArmanShirzad`)
+  * `GITHUB_REPO` - GitHub repository name (e.g., `aws-fargate-cdk-Production-infrastructure`)
 
 ## Blue/Green & canary deployments
 

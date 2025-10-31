@@ -7,8 +7,8 @@
     "cpuTargetUtilizationPercent": "55",
     "minTaskCount": "1",
     "maxTaskCount": "5",
-    "githubOrg": "your-org",
-    "githubRepo": "your-repo"
+    "githubOrg": "ArmanShirzad",
+    "githubRepo": "aws-fargate-cdk-Production-infrastructure"
   }
 }
 

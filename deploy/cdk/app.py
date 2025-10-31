@@ -14,8 +14,8 @@ enable_adot = (app.node.try_get_context("enableAdot") or "false").lower() == "tr
 min_task_count = int(app.node.try_get_context("minTaskCount") or 1)
 max_task_count = int(app.node.try_get_context("maxTaskCount") or 5)
 cpu_target = int(app.node.try_get_context("cpuTargetUtilizationPercent") or 55)
-github_org = app.node.try_get_context("githubOrg") or "your-org"
-github_repo = app.node.try_get_context("githubRepo") or "your-repo"
+github_org = app.node.try_get_context("githubOrg") or "ArmanShirzad"
+github_repo = app.node.try_get_context("githubRepo") or "aws-fargate-cdk-Production-infrastructure"
 
 ServiceStack(
     app,
