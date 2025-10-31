@@ -14,13 +14,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
-      CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+      CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION || '' }}
+      CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID || '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check AWS secrets configuration
+        id: check_aws
+        run: |
+          if [ -z "${{ secrets.AWS_REGION }}" ] || [ -z "${{ secrets.AWS_DEPLOY_ROLE_ARN }}" ] || [ -z "${{ secrets.AWS_ACCOUNT_ID }}" ]; then
+            echo "aws_configured=false" >> $GITHUB_OUTPUT
+            echo "::notice::AWS secrets not configured. Skipping AWS deployment steps."
+            echo "::notice::Configure AWS_REGION, AWS_DEPLOY_ROLE_ARN, and AWS_ACCOUNT_ID secrets to enable deployment."
+          else
+            echo "aws_configured=true" >> $GITHUB_OUTPUT
+            echo "::notice::AWS secrets configured. Proceeding with deployment."
+          fi
+
       - name: Configure AWS credentials
+        if: steps.check_aws.outputs.aws_configured == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
@@ -44,15 +57,39 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r deploy/cdk/requirements.txt
 
-      - name: CDK Diff
+      - name: Set GitHub context variables
+        id: github_context
+        run: |
+          GITHUB_ORG_VAR="${{ vars.GITHUB_ORG }}"
+          GITHUB_REPO_VAR="${{ vars.GITHUB_REPO }}"
+          if [ -z "$GITHUB_ORG_VAR" ]; then
+            echo "github_org=${{ github.repository_owner }}" >> $GITHUB_OUTPUT
+          else
+            echo "github_org=$GITHUB_ORG_VAR" >> $GITHUB_OUTPUT
+          fi
+          if [ -z "$GITHUB_REPO_VAR" ]; then
+            REPO_NAME="${GITHUB_REPOSITORY##*/}"
+            echo "github_repo=$REPO_NAME" >> $GITHUB_OUTPUT
+          else
+            echo "github_repo=$GITHUB_REPO_VAR" >> $GITHUB_OUTPUT
+          fi
+
+      - name: CDK Synth (validate)
         run: |
           cd deploy/cdk
-          cdk diff --context githubOrg=${{ vars.GITHUB_ORG }} --context githubRepo=${{ vars.GITHUB_REPO }}
+          cdk synth --context githubOrg=${{ steps.github_context.outputs.github_org }} --context githubRepo=${{ steps.github_context.outputs.github_repo }}
+
+      - name: CDK Diff
+        if: steps.check_aws.outputs.aws_configured == 'true'
+        run: |
+          cd deploy/cdk
+          cdk diff --context githubOrg=${{ steps.github_context.outputs.github_org }} --context githubRepo=${{ steps.github_context.outputs.github_repo }}
 
       - name: CDK Deploy
+        if: steps.check_aws.outputs.aws_configured == 'true'
         run: |
           cd deploy/cdk
           cdk deploy --require-approval never \
-            --context githubOrg=${{ vars.GITHUB_ORG }} \
-            --context githubRepo=${{ vars.GITHUB_REPO }}
+            --context githubOrg=${{ steps.github_context.outputs.github_org }} \
+            --context githubRepo=${{ steps.github_context.outputs.github_repo }}
 
